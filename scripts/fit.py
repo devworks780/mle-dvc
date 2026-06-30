@@ -2,10 +2,9 @@
 
 import pandas as pd
 from sklearn.compose import ColumnTransformer
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import Pipeline
-from category_encoders import CatBoostEncoder
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from catboost import CatBoostClassifier
 import yaml
 import os
 import joblib
@@ -22,7 +21,8 @@ def fit_model():
     # реализуйте основную логику шага с использованием гиперпараметров
     target_col = params["target_col"]
     one_hot_drop = params["one_hot_drop"]
-    auto_class_weights = params["auto_class_weights"]
+    logistic_regression_c = params["logistic_regression_c"]
+    logistic_regression_penalty = params["logistic_regression_penalty"]
 
     cat_features = data.select_dtypes(include='object')
     
@@ -35,14 +35,14 @@ def fit_model():
     preprocessor = ColumnTransformer(
         [
             ('binary', OneHotEncoder(drop=one_hot_drop), binary_cat_features.columns.tolist()),
-            ('cat', CatBoostEncoder(return_df=False), other_cat_features.columns.tolist()),
+            ('cat', OneHotEncoder(drop=one_hot_drop), other_cat_features.columns.tolist()),
             ('num', StandardScaler(), num_features.columns.tolist())
         ],
         remainder='drop',
         verbose_feature_names_out=False
     )
 
-    model = CatBoostClassifier(auto_class_weights=auto_class_weights)
+    model = LogisticRegression(C=logistic_regression_c, penalty=logistic_regression_penalty)
 
     pipeline = Pipeline(
         [
